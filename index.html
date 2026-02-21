@@ -8,77 +8,211 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body { margin: 0; }
-    #map { height: 100vh; }
-    .legend {
-      background: white;
-      padding: 10px;
+    #map { height: 100vh; width: 100vw; }
+
+    /* Popup card style */
+    .popup-card{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      border: 2px solid #d33;
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 220px;
+    }
+    .popup-title{
+      font-weight: 800;
+      font-size: 18px;
+      color: #d33;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .popup-line{ font-size: 14px; margin: 4px 0; }
+    .popup-line b{ font-weight: 700; }
+
+    /* Legend box */
+    .legend{
+      background: rgba(255,255,255,0.95);
+      padding: 10px 12px;
       line-height: 18px;
-      color: #333;
-      font-size: 14px;
+      color: #222;
+      font-size: 13px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.15);
+      min-width: 170px;
+    }
+    .legend .title{
+      font-weight: 800;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .legend .date{
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: #444;
+    }
+    .swatch{
+      display:inline-block;
+      width:12px;
+      height:12px;
+      margin-right:6px;
+      border: 1px solid #111;
+      vertical-align: -2px;
+    }
+    .leaflet-control-layers-overlays label{
+      font-weight: 600;
     }
   </style>
 </head>
-<body>
 
+<body>
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-var map = L.map('map').setView([41.3665, -76.0535], 15);
+  // ---------- CONFIG ----------
+  const DEFAULT_CENTER = [41.3665, -76.0535];
+  const DEFAULT_ZOOM   = 14;
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+  // Your 2026 dataset (you can add more dates later by duplicating entries w/ new date strings)
+  const icePoints = [
+    { wp: 1,  date: "February 15, 2026", time: "15:52:03", lat: 41.36536, lon: -76.05671, depth: 13.5 },
+    { wp: 2,  date: "February 15, 2026", time: "15:56:39", lat: 41.36458, lon: -76.05599, depth: 13.5 },
+    { wp: 3,  date: "February 15, 2026", time: "15:59:19", lat: 41.36403, lon: -76.05496, depth: 13.5 },
+    { wp: 4,  date: "February 15, 2026", time: "16:02:56", lat: 41.36473, lon: -76.05352, depth: 13.5 },
+    { wp: 5,  date: "February 15, 2026", time: "16:07:19", lat: 41.36655, lon: -76.05417, depth: 11.5 },
+    { wp: 6,  date: "February 15, 2026", time: "16:11:48", lat: 41.36631, lon: -76.05347, depth: 11.5 },
+    { wp: 7,  date: "February 15, 2026", time: "16:16:39", lat: 41.36587, lon: -76.05152, depth: 15.0 },
+    { wp: 8,  date: "February 15, 2026", time: "16:22:37", lat: 41.36670, lon: -76.04930, depth: 13.5 },
+    { wp: 9,  date: "February 15, 2026", time: "16:26:42", lat: 41.36759, lon: -76.05027, depth: 10.5 },
+    { wp: 10, date: "February 15, 2026", time: "16:31:30", lat: 41.36845, lon: -76.05107, depth: 12.5 },
+    { wp: 11, date: "February 15, 2026", time: "16:37:56", lat: 41.36843, lon: -76.04916, depth: 8.5  }
+  ];
 
-function getColor(thickness) {
-  return thickness >= 15 ? '#08306b' :
-         thickness >= 13 ? '#2171b5' :
-         thickness >= 11 ? '#41b6c4' :
-         thickness >= 9  ? '#feb24c' :
-                           '#de2d26';
-}
+  // Thickness → color
+  function getColor(inches){
+    // Adjust bins anytime
+    if (inches >= 15) return "#08306b";  // darkest
+    if (inches >= 13) return "#2171b5";
+    if (inches >= 11) return "#41b6c4";
+    if (inches >= 9)  return "#feb24c";
+    return "#de2d26";                    // thinnest
+  }
 
-var iceData = [
-  [41.36536, -76.05671, 13.5],
-  [41.36458, -76.05599, 13.5],
-  [41.36403, -76.05496, 13.5],
-  [41.36473, -76.05352, 13.5],
-  [41.36655, -76.05417, 11.5],
-  [41.36631, -76.05347, 11.5],
-  [41.36587, -76.05152, 15],
-  [41.36670, -76.04930, 13.5],
-  [41.36759, -76.05027, 10.5],
-  [41.36845, -76.05107, 12.5],
-  [41.36843, -76.04916, 8.5]
-];
+  // ---------- MAP ----------
+  const map = L.map("map").setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
-iceData.forEach(function(point) {
-  L.circleMarker([point[0], point[1]], {
-    radius: 8,
-    fillColor: getColor(point[2]),
-    color: "#000",
-    weight: 1,
-    fillOpacity: 0.9
-  }).addTo(map)
-    .bindPopup("<b>" + point[2] + " inches</b><br>Measured 2/15/2026");
-});
+  const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+    maxZoom: 19
+  }).addTo(map);
 
-var legend = L.control({position: 'bottomright'});
-legend.onAdd = function (map) {
-  var div = L.DomUtil.create('div', 'legend');
-  div.innerHTML += "<b>Ice Thickness (inches)</b><br>";
-  div.innerHTML += "<i style='background:#08306b;width:12px;height:12px;display:inline-block;'></i> 15+<br>";
-  div.innerHTML += "<i style='background:#2171b5;width:12px;height:12px;display:inline-block;'></i> 13–14<br>";
-  div.innerHTML += "<i style='background:#41b6c4;width:12px;height:12px;display:inline-block;'></i> 11–12<br>";
-  div.innerHTML += "<i style='background:#feb24c;width:12px;height:12px;display:inline-block;'></i> 9–10<br>";
-  div.innerHTML += "<i style='background:#de2d26;width:12px;height:12px;display:inline-block;'></i> ≤ 8.5";
-  return div;
-};
-legend.addTo(map);
+  // Group points by date so you can toggle dates like last year
+  const dateGroups = new Map();
+  icePoints.forEach(p => {
+    if (!dateGroups.has(p.date)) dateGroups.set(p.date, L.layerGroup());
+  });
 
-// Helps prevent blank/white map on some loads
-setTimeout(() => { map.invalidateSize(); }, 250);
+  // Add markers to date groups
+  const bounds = [];
+  icePoints.forEach(p => {
+    const marker = L.circleMarker([p.lat, p.lon], {
+      radius: 8,
+      fillColor: getColor(p.depth),
+      color: "#000",
+      weight: 1,
+      fillOpacity: 0.9
+    });
+
+    const popupHtml = `
+      <div class="popup-card">
+        <div class="popup-title">Waypoint ${p.wp}</div>
+        <div class="popup-line"><b>Ice Depth:</b> ${p.depth}"</div>
+        <div class="popup-line"><b>Date:</b> ${p.date}</div>
+        <div class="popup-line"><b>Time:</b> ${p.time}</div>
+        <div class="popup-line"><b>Coords:</b> ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</div>
+      </div>
+    `;
+    marker.bindPopup(popupHtml, { maxWidth: 320 });
+
+    dateGroups.get(p.date).addLayer(marker);
+    bounds.push([p.lat, p.lon]);
+  });
+
+  // Turn on all date layers by default
+  const overlays = {};
+  for (const [date, group] of dateGroups.entries()) {
+    group.addTo(map);
+    overlays[date] = group;
+  }
+
+  // Top-right date toggle control
+  L.control.layers(
+    { "OpenStreetMap": osm },
+    overlays,
+    { collapsed: false }
+  ).addTo(map);
+
+  // Fit to points
+  if (bounds.length) map.fitBounds(bounds, { padding: [30, 30] });
+
+  // ---------- LEGEND (date-aware) ----------
+  const legend = L.control({ position: "bottomright" });
+  let activeDates = new Set(dateGroups.keys()); // all on by default
+
+  function legendHtml(){
+    const active = [...activeDates];
+    const dateLine = active.length === 0
+      ? "No dates selected"
+      : active.length === 1
+        ? active[0]
+        : `${active.length} dates selected`;
+
+    return `
+      <div class="legend">
+        <div class="title">Ice Thickness (inches)</div>
+        <div class="date">${dateLine}</div>
+        <div><span class="swatch" style="background:${getColor(15)}"></span>15+</div>
+        <div><span class="swatch" style="background:${getColor(13)}"></span>13–14.9</div>
+        <div><span class="swatch" style="background:${getColor(11)}"></span>11–12.9</div>
+        <div><span class="swatch" style="background:${getColor(9)}"></span>9–10.9</div>
+        <div><span class="swatch" style="background:${getColor(0)}"></span>&lt;9</div>
+      </div>
+    `;
+  }
+
+  legend.onAdd = function(){
+    const div = L.DomUtil.create("div");
+    div.innerHTML = legendHtml();
+    return div;
+  };
+  legend.addTo(map);
+
+  function updateLegend(){
+    // Legend is the *last* .legend on the page; just update its container.
+    const el = document.querySelector(".legend");
+    if (el) el.parentElement.innerHTML = legendHtml();
+  }
+
+  // When overlay toggles change, update activeDates + legend
+  map.on("overlayadd", (e) => {
+    // Find which date was toggled on
+    for (const [date, group] of dateGroups.entries()) {
+      if (e.layer === group) activeDates.add(date);
+    }
+    updateLegend();
+  });
+  map.on("overlayremove", (e) => {
+    for (const [date, group] of dateGroups.entries()) {
+      if (e.layer === group) activeDates.delete(date);
+    }
+    updateLegend();
+  });
+
+  // Prevent occasional blank map on load
+  setTimeout(() => map.invalidateSize(), 250);
 </script>
-
 </body>
 </html>
+
+
