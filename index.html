@@ -8,35 +8,35 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body { margin:0; }
-    #map { height: 100vh; width: 100vw; }
+    #map { height:100vh; width:100vw; }
 
-    /* Popup card like your example */
+    /* popup styling similar to last year */
     .popup-card{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: #fff;
-      border: 2px solid #7a1fa2;       /* purple border like example */
-      border-radius: 10px;
-      padding: 12px 14px;
-      min-width: 230px;
+      background:#fff;
+      border:2px solid #7a1fa2;
+      border-radius:10px;
+      padding:12px 14px;
+      min-width:240px;
       box-shadow: 0 8px 20px rgba(0,0,0,.12);
     }
     .popup-title{
       font-weight: 800;
       font-size: 18px;
       color: #7a1fa2;
-      text-align: center;
-      margin-bottom: 8px;
+      text-align:center;
+      margin-bottom:8px;
     }
     .popup-hr{
-      height: 2px;
-      background: #7a1fa2;
-      opacity: .35;
+      height:2px;
+      background:#7a1fa2;
+      opacity:.35;
       margin: 8px 0 10px;
     }
-    .popup-line{ font-size: 14px; margin: 6px 0; }
-    .popup-line b{ font-weight: 700; }
+    .popup-line{ font-size:14px; margin:6px 0; }
+    .popup-line b{ font-weight:700; }
 
-    /* Legend */
+    /* date legend (like last year) */
     .legend{
       background: rgba(255,255,255,0.95);
       padding: 10px 12px;
@@ -46,54 +46,58 @@
       border-radius: 10px;
       border: 1px solid #ccc;
       box-shadow: 0 1px 6px rgba(0,0,0,0.15);
-      min-width: 200px;
+      min-width: 190px;
     }
-    .legend .title{ font-weight: 800; margin-bottom: 6px; }
-    .legend .date{ font-weight: 700; margin-bottom: 8px; font-size: 12px; color: #444; }
-
-    .swatch{
+    .legend .title{ font-weight:800; margin-bottom:6px; }
+    .dot{
       display:inline-block;
-      width:12px;
-      height:12px;
-      margin-right:6px;
-      border: 1px solid #111;
-      vertical-align: -2px;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      margin-right:8px;
+      border:1px solid rgba(0,0,0,.25);
+      vertical-align: -1px;
     }
   </style>
 </head>
+
 <body>
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ---------- DATA ----------
+  // ----------------------------
+  // 1) DATE COLORS (LIKE 2025)
+  // ----------------------------
+  // Add more dates here later.
+  const DATE_COLORS = {
+    "February 15, 2026": "#7a1fa2" // purple like your example pins
+    // "February 10, 2026": "#2b8cbe",
+    // "February 17, 2026": "#31a354",
+    // "February 23, 2026": "#e34a33",
+  };
+
+  // ----------------------------
+  // 2) DATA
+  // ----------------------------
   const icePoints = [
-    { wp: 1,  date: "February 15, 2026", time: "15:52:03", lat: 41.36536, lon: -76.05671, depth: 13.5 },
-    { wp: 2,  date: "February 15, 2026", time: "15:56:39", lat: 41.36458, lon: -76.05599, depth: 13.5 },
-    { wp: 3,  date: "February 15, 2026", time: "15:59:19", lat: 41.36403, lon: -76.05496, depth: 13.5 },
-    { wp: 4,  date: "February 15, 2026", time: "16:02:56", lat: 41.36473, lon: -76.05352, depth: 13.5 },
-    { wp: 5,  date: "February 15, 2026", time: "16:07:19", lat: 41.36655, lon: -76.05417, depth: 11.5 },
-    { wp: 6,  date: "February 15, 2026", time: "16:11:48", lat: 41.36631, lon: -76.05347, depth: 11.5 },
-    { wp: 7,  date: "February 15, 2026", time: "16:16:39", lat: 41.36587, lon: -76.05152, depth: 15.0 },
-    { wp: 8,  date: "February 15, 2026", time: "16:22:37", lat: 41.36670, lon: -76.04930, depth: 13.5 },
-    { wp: 9,  date: "February 15, 2026", time: "16:26:42", lat: 41.36759, lon: -76.05027, depth: 10.5 },
-    { wp: 10, date: "February 15, 2026", time: "16:31:30", lat: 41.36845, lon: -76.05107, depth: 12.5 },
-    { wp: 11, date: "February 15, 2026", time: "16:37:56", lat: 41.36843, lon: -76.04916, depth: 8.5  }
+    { wp: 1,  date: "February 15, 2026", depth: 13.5, lat: 41.36536, lon: -76.05671 },
+    { wp: 2,  date: "February 15, 2026", depth: 13.5, lat: 41.36458, lon: -76.05599 },
+    { wp: 3,  date: "February 15, 2026", depth: 13.5, lat: 41.36403, lon: -76.05496 },
+    { wp: 4,  date: "February 15, 2026", depth: 13.5, lat: 41.36473, lon: -76.05352 },
+    { wp: 5,  date: "February 15, 2026", depth: 11.5, lat: 41.36655, lon: -76.05417 },
+    { wp: 6,  date: "February 15, 2026", depth: 11.5, lat: 41.36631, lon: -76.05347 },
+    { wp: 7,  date: "February 15, 2026", depth: 15.0, lat: 41.36587, lon: -76.05152 },
+    { wp: 8,  date: "February 15, 2026", depth: 13.5, lat: 41.36670, lon: -76.04930 },
+    { wp: 9,  date: "February 15, 2026", depth: 10.5, lat: 41.36759, lon: -76.05027 },
+    { wp: 10, date: "February 15, 2026", depth: 12.5, lat: 41.36845, lon: -76.05107 },
+    { wp: 11, date: "February 15, 2026", depth: 8.5,  lat: 41.36843, lon: -76.04916 }
   ];
 
-  // ---------- COLOR SCALE (thickness) ----------
-  function getColor(inches){
-    if (inches >= 15) return "#7a1fa2";   // purple (matches your screenshot pins)
-    if (inches >= 13) return "#e74c3c";   // red-ish
-    if (inches >= 11) return "#2ecc71";   // green
-    if (inches >= 9)  return "#3498db";   // blue
-    return "#f39c12";                     // orange for thinnest
-  }
-
-  // ---------- PIN ICON (teardrop with "i") ----------
+  // ----------------------------
+  // 3) PIN ICON (TEARDROP + "i")
+  // ----------------------------
   function pinSVG(fill){
-    // Simple teardrop pin with small white "i" circle
-    // (All inline SVG -> works on GitHub Pages with no extra files.)
     const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="44" height="58" viewBox="0 0 44 58">
       <defs>
@@ -101,16 +105,10 @@
           <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/>
         </filter>
       </defs>
-
-      <!-- pin -->
       <path filter="url(#shadow)"
         d="M22 57 C22 57 6 38 6 24 C6 12.4 13.9 3 22 3 C30.1 3 38 12.4 38 24 C38 38 22 57 22 57 Z"
-        fill="${fill}" stroke="rgba(0,0,0,0.15)" stroke-width="1.2"/>
-
-      <!-- inner circle -->
+        fill="${fill}" stroke="rgba(0,0,0,0.18)" stroke-width="1.2"/>
       <circle cx="22" cy="22" r="9.2" fill="white" opacity="0.95"/>
-
-      <!-- "i" -->
       <circle cx="22" cy="18.2" r="1.6" fill="${fill}"/>
       <rect x="21.1" y="21" width="1.8" height="7.2" rx="0.9" fill="${fill}"/>
     </svg>`;
@@ -126,7 +124,9 @@
     });
   }
 
-  // ---------- MAP ----------
+  // ----------------------------
+  // 4) MAP
+  // ----------------------------
   const map = L.map("map").setView([41.3665, -76.0535], 14);
 
   const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -134,26 +134,28 @@
     maxZoom: 19
   }).addTo(map);
 
-  // group by date for toggles
+  // Group by date so the toggle list matches last year
   const dateGroups = new Map();
+  Object.keys(DATE_COLORS).forEach(d => dateGroups.set(d, L.layerGroup()));
+
+  // Also ensure any date present in data but not in DATE_COLORS still works
   icePoints.forEach(p => {
     if (!dateGroups.has(p.date)) dateGroups.set(p.date, L.layerGroup());
   });
 
-  // add markers
   const bounds = [];
+
   icePoints.forEach(p => {
-    const color = getColor(p.depth);
+    const color = DATE_COLORS[p.date] || "#555"; // fallback if date not defined
     const marker = L.marker([p.lat, p.lon], { icon: makePinIcon(color) });
 
+    // Popup like last year
     const popupHtml = `
-      <div class="popup-card">
-        <div class="popup-title">Waypoint ${p.wp}</div>
-        <div class="popup-hr"></div>
+      <div class="popup-card" style="border-color:${color}">
+        <div class="popup-title" style="color:${color}">Waypoint ${p.wp}</div>
+        <div class="popup-hr" style="background:${color}"></div>
         <div class="popup-line"><b>Ice Depth:</b> ${p.depth} inches</div>
         <div class="popup-line"><b>Collected:</b> ${p.date}</div>
-        <div class="popup-line"><b>Time:</b> ${p.time}</div>
-        <div class="popup-line"><b>Coords:</b> ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</div>
       </div>
     `;
     marker.bindPopup(popupHtml, { maxWidth: 340 });
@@ -162,70 +164,38 @@
     bounds.push([p.lat, p.lon]);
   });
 
-  // overlays
+  // Overlays for layer control
   const overlays = {};
   for (const [date, group] of dateGroups.entries()) {
     group.addTo(map);
     overlays[date] = group;
   }
 
+  // Top-right checkbox list (like last year)
   L.control.layers(
-    { "OpenStreetMap": osm },
+    { "openstreetmap": osm },
     overlays,
     { collapsed: false }
   ).addTo(map);
 
   if (bounds.length) map.fitBounds(bounds, { padding: [30, 30] });
 
-  // ---------- LEGEND ----------
+  // ----------------------------
+  // 5) DATE LEGEND (LIKE LAST YEAR)
+  // ----------------------------
   const legend = L.control({ position: "bottomright" });
-  let activeDates = new Set(dateGroups.keys());
-
-  function legendHtml(){
-    const active = [...activeDates];
-    const dateLine = active.length === 0
-      ? "No dates selected"
-      : active.length === 1
-        ? active[0]
-        : `${active.length} dates selected`;
-
-    return `
-      <div class="legend">
-        <div class="title">Legend</div>
-        <div class="date">${dateLine}</div>
-        <div><span class="swatch" style="background:${getColor(15)}"></span>15+</div>
-        <div><span class="swatch" style="background:${getColor(13)}"></span>13–14.9</div>
-        <div><span class="swatch" style="background:${getColor(11)}"></span>11–12.9</div>
-        <div><span class="swatch" style="background:${getColor(9)}"></span>9–10.9</div>
-        <div><span class="swatch" style="background:${getColor(0)}"></span>&lt;9</div>
-      </div>
-    `;
-  }
-
   legend.onAdd = function(){
-    const div = L.DomUtil.create("div");
-    div.innerHTML = legendHtml();
+    const div = L.DomUtil.create("div", "legend");
+    div.innerHTML += `<div class="title">Dates</div>`;
+    for (const date of Object.keys(DATE_COLORS)) {
+      div.innerHTML += `<div><span class="dot" style="background:${DATE_COLORS[date]}"></span>${date}</div>`;
+    }
     return div;
   };
   legend.addTo(map);
 
-  function updateLegend(){
-    const el = document.querySelector(".legend");
-    if (el) el.parentElement.innerHTML = legendHtml();
-  }
-
-  map.on("overlayadd", (e) => {
-    for (const [date, group] of dateGroups.entries()) if (e.layer === group) activeDates.add(date);
-    updateLegend();
-  });
-  map.on("overlayremove", (e) => {
-    for (const [date, group] of dateGroups.entries()) if (e.layer === group) activeDates.delete(date);
-    updateLegend();
-  });
-
-  // prevent occasional blank load
+  // Prevent occasional blank map load
   setTimeout(() => map.invalidateSize(), 250);
 </script>
 </body>
 </html>
-
